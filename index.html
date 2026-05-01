@@ -1,0 +1,336 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>MA — period tracker</title>
+<style>
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+body{background:#1A0A10;display:flex;align-items:center;justify-content:center;min-height:100vh;font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif}
+.phone{width:360px;background:#F9F5F7;border-radius:36px;border:0.5px solid #3A1520;overflow:hidden;min-height:700px;position:relative;display:flex;flex-direction:column;box-shadow:0 30px 80px rgba(0,0,0,.5)}
+.statusbar{display:none}
+.notch{display:none}
+.screen{flex:1;background:#F9F5F7;display:flex;flex-direction:column;overflow:hidden}
+.header{padding:16px 20px 0;display:flex;align-items:center;justify-content:space-between}
+.app-title{font-size:22px;font-weight:500;color:#1A0A10;font-family:Georgia,serif}
+.app-title span{color:#993556}
+.avatar{width:34px;height:34px;border-radius:50%;background:#FBEAF0;border:0.5px solid #F4C0D1;display:flex;align-items:center;justify-content:center;font-size:14px;color:#993556;font-weight:500}
+.hero-strip{margin:16px 20px 0;background:#FBEAF0;border-radius:16px;padding:14px 16px;display:flex;align-items:center;justify-content:space-between}
+.hero-main{display:flex;flex-direction:column}
+.hero-big{font-size:28px;font-weight:500;color:#72243E;line-height:1}
+.hero-lbl{font-size:11px;color:#993556;margin-top:3px;letter-spacing:.04em}
+.hero-stats{display:flex;gap:16px}
+.mini-stat{text-align:center}
+.mini-num{font-size:17px;font-weight:500;color:#72243E}
+.mini-lbl{font-size:10px;color:#993556;letter-spacing:.03em}
+.content{flex:1;overflow-y:auto;padding:0 0 80px}
+.page{display:none;padding:0 20px}.page.active{display:block}
+.sec-title{font-size:11px;font-weight:500;letter-spacing:.1em;color:#6B5360;margin:20px 0 10px;text-transform:uppercase}
+.add-card{background:#fff;border-radius:16px;padding:14px;box-shadow:0 1px 4px rgba(114,36,62,.06)}
+.add-card .field{margin-bottom:10px}
+.add-card .field:last-of-type{margin-bottom:0}
+.field label{display:block;font-size:11px;color:#6B5360;margin-bottom:5px;letter-spacing:.04em}
+.field input{width:100%;height:44px;border:0.5px solid #E8D0D9;border-radius:10px;padding:0 12px;font-size:15px;background:#F9F5F7;color:#1A0A10;-webkit-appearance:none}
+.field input:focus{outline:none;border-color:#993556}
+.row2f{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.add-btn-big{width:100%;margin-top:12px;height:48px;background:#72243E;color:#F4C0D1;border:none;border-radius:12px;font-size:15px;font-weight:500;cursor:pointer;letter-spacing:.04em}
+.cal-head{display:flex;align-items:center;justify-content:space-between;margin:20px 0 12px}
+.cal-mo{font-size:16px;font-weight:500;color:#1A0A10}
+.cal-nav-row{display:flex;gap:6px}
+.cnav{width:32px;height:32px;border-radius:8px;border:0.5px solid #E8D0D9;background:transparent;font-size:16px;color:#6B5360;cursor:pointer;display:flex;align-items:center;justify-content:center}
+.dgrid{display:grid;grid-template-columns:repeat(7,1fr);gap:2px}
+.dname{text-align:center;font-size:10px;color:#6B5360;padding:4px 0;font-weight:500}
+.day{width:100%;aspect-ratio:1;display:flex;align-items:center;justify-content:center;border-radius:8px;font-size:13px;color:#1A0A10;cursor:pointer;position:relative}
+.day.empty{cursor:default}
+.day.period{background:#FBEAF0;color:#72243E;font-weight:500}
+.day.heavy{background:#F4C0D1;color:#4B1528;font-weight:500}
+.day.fertile{background:#E1F5EE;color:#085041}
+.day.ovulation{background:#9FE1CB;color:#04342C;font-weight:500}
+.day.pred{border:1.5px dashed #ED93B1;color:#993556}
+.day.today::after{content:'';position:absolute;bottom:2px;left:50%;transform:translateX(-50%);width:3px;height:3px;border-radius:50%;background:#993556}
+.legend{display:flex;flex-wrap:wrap;gap:8px;margin-top:12px}
+.li{display:flex;align-items:center;gap:4px;font-size:10px;color:#6B5360}
+.ldot{width:9px;height:9px;border-radius:3px;flex-shrink:0}
+.log-card{background:#fff;border-radius:16px;padding:14px;margin-bottom:10px;box-shadow:0 1px 4px rgba(114,36,62,.06)}
+.log-sec-lbl{font-size:11px;font-weight:500;color:#6B5360;letter-spacing:.08em;margin-bottom:10px;text-transform:uppercase}
+.flow-row{display:grid;grid-template-columns:repeat(4,1fr);gap:6px}
+.flow-btn{height:40px;border-radius:10px;border:0.5px solid #E8D0D9;background:#F9F5F7;font-size:12px;cursor:pointer;color:#6B5360;transition:all .15s;font-family:-apple-system,sans-serif}
+.flow-btn.on{background:#FBEAF0;border-color:#F4C0D1;color:#72243E;font-weight:500}
+.pill-wrap{display:flex;flex-wrap:wrap;gap:6px}
+.pill{padding:8px 14px;border-radius:20px;border:0.5px solid #E8D0D9;background:#F9F5F7;font-size:13px;cursor:pointer;color:#6B5360;font-family:-apple-system,sans-serif}
+.pill.on{background:#FBEAF0;border-color:#F4C0D1;color:#72243E}
+.save-btn{width:100%;height:50px;background:#72243E;color:#F4C0D1;border:none;border-radius:14px;font-size:15px;font-weight:500;cursor:pointer;margin-top:4px;letter-spacing:.04em}
+.ins-item{display:flex;gap:12px;align-items:flex-start;padding:14px 0;border-bottom:0.5px solid #F0E4EA}
+.ins-item:last-child{border:none}
+.ins-icon{width:38px;height:38px;border-radius:10px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.ins-lbl{font-size:14px;font-weight:500;color:#1A0A10}
+.ins-desc{font-size:12px;color:#6B5360;margin-top:3px;line-height:1.5}
+.hrow{display:flex;align-items:center;gap:10px;padding:12px 0;border-bottom:0.5px solid #F0E4EA}
+.hrow:last-child{border:none}
+.hbar{height:3px;border-radius:2px;background:#F0E4EA;margin:5px 0;width:100%}
+.hbar-fill{height:100%;border-radius:2px;background:#F4C0D1}
+.del{width:28px;height:28px;border-radius:8px;border:0.5px solid #E8D0D9;background:transparent;color:#6B5360;cursor:pointer;font-size:14px;flex-shrink:0;display:flex;align-items:center;justify-content:center}
+.empty-msg{text-align:center;padding:40px 0;color:#6B5360;font-size:13px;line-height:1.6}
+.bottom-nav{position:absolute;bottom:0;left:0;right:0;height:72px;background:#F9F5F7;border-top:0.5px solid #F0E4EA;display:flex;align-items:center;justify-content:space-around;padding:0 10px 8px}
+.bnav{display:flex;flex-direction:column;align-items:center;gap:4px;cursor:pointer;padding:6px 20px;border-radius:12px;border:none;background:transparent;flex:1}
+.bnav.active .bicon{color:#993556}
+.bnav.active .blbl{color:#993556}
+.bicon{font-size:20px;line-height:1;color:#6B5360}
+.blbl{font-size:10px;color:#6B5360;letter-spacing:.04em}
+.toast{position:absolute;bottom:84px;left:50%;transform:translateX(-50%);background:#2C0F1A;color:#F4C0D1;padding:8px 18px;border-radius:20px;font-size:12px;font-weight:500;opacity:0;transition:opacity .25s;pointer-events:none;white-space:nowrap;z-index:10}
+.toast.show{opacity:1}
+.loading{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;background:#F9F5F7;z-index:20;border-radius:36px}
+.loading-dot{width:8px;height:8px;border-radius:50%;background:#993556;animation:pulse 1s ease-in-out infinite}
+@keyframes pulse{0%,100%{opacity:.3;transform:scale(.8)}50%{opacity:1;transform:scale(1)}}
+</style>
+</head>
+<body>
+<div class="phone">
+  <div class="loading" id="loading"><div class="loading-dot"></div></div>
+  <div class="statusbar"><div class="notch"></div></div>
+  <div class="screen">
+    <div class="header">
+      <div class="app-title">MA<span>.</span></div>
+      <div class="avatar">A</div>
+    </div>
+    <div class="hero-strip">
+      <div class="hero-main">
+        <div class="hero-big" id="s-until">—</div>
+        <div class="hero-lbl">days until period</div>
+      </div>
+      <div class="hero-stats">
+        <div class="mini-stat"><div class="mini-num" id="s-cycle">—</div><div class="mini-lbl">cycle</div></div>
+        <div class="mini-stat"><div class="mini-num" id="s-dur">—</div><div class="mini-lbl">duration</div></div>
+      </div>
+    </div>
+    <div class="content">
+      <div id="p-calendar" class="page active">
+        <div class="sec-title">Add period</div>
+        <div class="add-card">
+          <div class="field"><label>Start date</label><input type="date" id="inp-date"></div>
+          <div class="row2f">
+            <div class="field"><label>Duration (days)</label><input type="number" id="inp-dur" value="5" min="1" max="10" style="text-align:center"></div>
+            <div class="field"><label>Cycle length</label><input type="number" id="inp-cycle" value="28" min="21" max="40" style="text-align:center"></div>
+          </div>
+          <button class="add-btn-big" onclick="addPeriod()">+ Add period</button>
+        </div>
+        <div class="cal-head">
+          <span class="cal-mo" id="cal-label"></span>
+          <div class="cal-nav-row">
+            <button class="cnav" onclick="mv(-1)">&#8249;</button>
+            <button class="cnav" onclick="mv(1)">&#8250;</button>
+          </div>
+        </div>
+        <div class="dgrid" id="dgrid"></div>
+        <div class="legend">
+          <div class="li"><div class="ldot" style="background:#F4C0D1;border:0.5px solid #ED93B1"></div>Period</div>
+          <div class="li"><div class="ldot" style="background:#9FE1CB;border:0.5px solid #5DCAA5"></div>Ovulation</div>
+          <div class="li"><div class="ldot" style="background:#E1F5EE;border:0.5px solid #9FE1CB"></div>Fertile</div>
+          <div class="li"><div class="ldot" style="background:transparent;border:1.5px dashed #ED93B1"></div>Predicted</div>
+        </div>
+      </div>
+      <div id="p-log" class="page">
+        <div class="sec-title">Today's log</div>
+        <div class="log-card">
+          <div class="log-sec-lbl">Flow</div>
+          <div class="flow-row">
+            <button class="flow-btn" onclick="solo(this)">Spotting</button>
+            <button class="flow-btn" onclick="solo(this)">Light</button>
+            <button class="flow-btn on" onclick="solo(this)">Medium</button>
+            <button class="flow-btn" onclick="solo(this)">Heavy</button>
+          </div>
+        </div>
+        <div class="log-card">
+          <div class="log-sec-lbl">Mood</div>
+          <div class="pill-wrap">
+            <button class="pill on" onclick="this.classList.toggle('on')">Happy</button>
+            <button class="pill" onclick="this.classList.toggle('on')">Calm</button>
+            <button class="pill" onclick="this.classList.toggle('on')">Anxious</button>
+            <button class="pill" onclick="this.classList.toggle('on')">Sad</button>
+            <button class="pill" onclick="this.classList.toggle('on')">Irritable</button>
+            <button class="pill" onclick="this.classList.toggle('on')">Tired</button>
+          </div>
+        </div>
+        <div class="log-card">
+          <div class="log-sec-lbl">Symptoms</div>
+          <div class="pill-wrap">
+            <button class="pill on" onclick="this.classList.toggle('on')">Cramps</button>
+            <button class="pill" onclick="this.classList.toggle('on')">Headache</button>
+            <button class="pill" onclick="this.classList.toggle('on')">Bloating</button>
+            <button class="pill" onclick="this.classList.toggle('on')">Back pain</button>
+            <button class="pill" onclick="this.classList.toggle('on')">Nausea</button>
+            <button class="pill" onclick="this.classList.toggle('on')">Fatigue</button>
+            <button class="pill" onclick="this.classList.toggle('on')">Acne</button>
+          </div>
+        </div>
+        <button class="save-btn" onclick="saveLog()">Save log</button>
+      </div>
+      <div id="p-insights" class="page">
+        <div class="sec-title">Insights</div>
+        <div id="ins-main"><div class="empty-msg">Period date တစ်ခုထည့်ပါ<br>predictions ပေါ်လာမည်</div></div>
+        <div id="ins-hist" style="display:none">
+          <div class="sec-title">History</div>
+          <div id="hist-list"></div>
+        </div>
+      </div>
+    </div>
+    <div class="bottom-nav">
+      <button class="bnav active" onclick="go('calendar',this)">
+        <svg class="bicon" width="22" height="22" viewBox="0 0 22 22" fill="none"><rect x="3" y="4" width="16" height="15" rx="3" stroke="currentColor" stroke-width="1.4"/><path d="M7 2v3M15 2v3M3 9h16" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/></svg>
+        <span class="blbl">Calendar</span>
+      </button>
+      <button class="bnav" onclick="go('log',this)">
+        <svg class="bicon" width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M6 11h10M6 15h6M6 7h10" stroke="currentColor" stroke-width="1.4" stroke-linecap="round"/><rect x="3" y="3" width="16" height="16" rx="3" stroke="currentColor" stroke-width="1.4"/></svg>
+        <span class="blbl">Log</span>
+      </button>
+      <button class="bnav" onclick="go('insights',this)">
+        <svg class="bicon" width="22" height="22" viewBox="0 0 22 22" fill="none"><path d="M4 16l4-4 4 3 6-7" stroke="currentColor" stroke-width="1.4" stroke-linecap="round" stroke-linejoin="round"/></svg>
+        <span class="blbl">Insights</span>
+      </button>
+    </div>
+    <div class="toast" id="toast"></div>
+  </div>
+</div>
+
+<script>
+const MN=['January','February','March','April','May','June','July','August','September','October','November','December'];
+const today=new Date();today.setHours(0,0,0,0);
+let vy=today.getFullYear(),vm=today.getMonth(),cycles=[];
+const pad=n=>String(n).padStart(2,'0');
+document.getElementById('inp-date').value=`${today.getFullYear()}-${pad(today.getMonth()+1)}-${pad(today.getDate())}`;
+
+function ds(d){return d.toDateString()}
+function parseDate(s){const[y,m,d]=s.split('-').map(Number);const x=new Date(y,m-1,d);x.setHours(0,0,0,0);return x}
+function fmt(d){return MN[d.getMonth()].slice(0,3)+' '+d.getDate()}
+
+async function saveCycles(){
+  try{
+    localStorage.setItem('ma_cycles',JSON.stringify(cycles.map(c=>({start:c.start.toISOString(),dur:c.dur,cycle:c.cycle}))));
+  }catch(e){}
+}
+
+async function loadCycles(){
+  try{
+    const r=localStorage.getItem('ma_cycles');
+    if(r){
+      const arr=JSON.parse(r);
+      cycles=arr.map(c=>({start:new Date(c.start),dur:c.dur,cycle:c.cycle}));
+      cycles.forEach(c=>c.start.setHours(0,0,0,0));
+    }
+  }catch(e){}
+}
+
+function buildMap(){
+  const map={};
+  const sorted=[...cycles].sort((a,b)=>a.start-b.start);
+  sorted.forEach((c,i)=>{
+    for(let j=0;j<c.dur;j++){const x=new Date(c.start);x.setDate(x.getDate()+j);if(!map[ds(x)])map[ds(x)]={t:j===1||j===2?'heavy':'period'}}
+    const ov=new Date(c.start);ov.setDate(ov.getDate()+c.cycle-14);
+    for(let j=-5;j<=1;j++){const x=new Date(ov);x.setDate(x.getDate()+j);if(!map[ds(x)])map[ds(x)]={t:j===0?'ovulation':'fertile'}}
+    if(i===sorted.length-1){
+      const ns=new Date(c.start);ns.setDate(ns.getDate()+c.cycle);
+      for(let j=0;j<c.dur;j++){const x=new Date(ns);x.setDate(x.getDate()+j);if(!map[ds(x)])map[ds(x)]={t:'pred'}}
+      const nv=new Date(ns);nv.setDate(nv.getDate()+c.cycle-14);
+      for(let j=-5;j<=1;j++){const x=new Date(nv);x.setDate(x.getDate()+j);if(!map[ds(x)])map[ds(x)]={t:j===0?'ovulation':'fertile'}}
+    }
+  });
+  return map;
+}
+
+function renderCal(){
+  document.getElementById('cal-label').textContent=MN[vm]+' '+vy;
+  const map=buildMap();
+  const g=document.getElementById('dgrid');g.innerHTML='';
+  ['S','M','T','W','T','F','S'].forEach(d=>{const e=document.createElement('div');e.className='dname';e.textContent=d;g.appendChild(e)});
+  const first=new Date(vy,vm,1).getDay();
+  for(let i=0;i<first;i++){const e=document.createElement('div');e.className='day empty';g.appendChild(e)}
+  const dim=new Date(vy,vm+1,0).getDate();
+  for(let d=1;d<=dim;d++){
+    const date=new Date(vy,vm,d);date.setHours(0,0,0,0);
+    const info=map[ds(date)];
+    const e=document.createElement('div');e.className='day';e.textContent=d;
+    if(info)e.classList.add(info.t);
+    if(ds(date)===ds(today))e.classList.add('today');
+    g.appendChild(e);
+  }
+}
+
+function updateStats(){
+  if(!cycles.length){['s-until','s-cycle','s-dur'].forEach(id=>document.getElementById(id).textContent='—');return}
+  const sorted=[...cycles].sort((a,b)=>a.start-b.start);
+  const last=sorted[sorted.length-1];
+  const ns=new Date(last.start);ns.setDate(ns.getDate()+last.cycle);
+  const diff=Math.round((ns-today)/864e5);
+  document.getElementById('s-until').textContent=diff>0?diff:(diff===0?'0':'—');
+  document.getElementById('s-cycle').textContent=Math.round(cycles.reduce((s,c)=>s+c.cycle,0)/cycles.length);
+  document.getElementById('s-dur').textContent=Math.round(cycles.reduce((s,c)=>s+c.dur,0)/cycles.length);
+}
+
+function renderInsights(){
+  const sorted=[...cycles].sort((a,b)=>a.start-b.start);
+  const im=document.getElementById('ins-main');
+  if(!sorted.length){im.innerHTML='<div class="empty-msg">Period date တစ်ခုထည့်ပါ<br>predictions ပေါ်လာမည်</div>';document.getElementById('ins-hist').style.display='none';return}
+  const last=sorted[sorted.length-1];
+  const ns=new Date(last.start);ns.setDate(ns.getDate()+last.cycle);
+  const fs=new Date(ns);fs.setDate(fs.getDate()+last.cycle-19);
+  const fe=new Date(ns);fe.setDate(fe.getDate()+last.cycle-13);
+  const ov=new Date(ns);ov.setDate(ov.getDate()+last.cycle-14);
+  const diff=Math.round((ns-today)/864e5);
+  im.innerHTML=`
+  <div class="ins-item"><div class="ins-icon" style="background:#FBEAF0"><svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="6" stroke="#993556" stroke-width="1.4"/><path d="M9 6v3.5l2 1" stroke="#993556" stroke-width="1.4" stroke-linecap="round"/></svg></div><div><div class="ins-lbl">Next period</div><div class="ins-desc">${fmt(ns)} — ${diff>0?'in '+diff+' days':diff===0?'today':'started'}</div></div></div>
+  <div class="ins-item"><div class="ins-icon" style="background:#E1F5EE"><svg width="18" height="18" viewBox="0 0 18 18" fill="none"><circle cx="9" cy="9" r="6" stroke="#085041" stroke-width="1.4"/><circle cx="9" cy="9" r="2.5" fill="#085041"/></svg></div><div><div class="ins-lbl">Fertile window</div><div class="ins-desc">${fmt(fs)} – ${fmt(fe)}, ovulation ${fmt(ov)}</div></div></div>
+  <div class="ins-item"><div class="ins-icon" style="background:#F5F0FB"><svg width="18" height="18" viewBox="0 0 18 18" fill="none"><path d="M3 9h12M9 3v12" stroke="#6B3DAA" stroke-width="1.4" stroke-linecap="round"/></svg></div><div><div class="ins-lbl">Regularity</div><div class="ins-desc">${sorted.length===1?'Add more cycles to track trends':'Tracking '+sorted.length+' cycles — avg '+Math.round(cycles.reduce((s,c)=>s+c.cycle,0)/cycles.length)+' days'}</div></div></div>`;
+  const ih=document.getElementById('ins-hist');ih.style.display='block';
+  const hl=document.getElementById('hist-list');hl.innerHTML='';
+  [...sorted].reverse().forEach((c,i)=>{
+    const r=document.createElement('div');r.className='hrow';
+    const pct=Math.round((c.cycle/40)*100);
+    r.innerHTML=`<div style="flex:1"><div style="font-size:13px;font-weight:500;color:#1A0A10">${fmt(c.start)}</div><div class="hbar"><div class="hbar-fill" style="width:${pct}%"></div></div><div style="font-size:11px;color:#6B5360">${c.cycle}-day cycle &bull; ${c.dur}-day period</div></div><button class="del" onclick="del(${sorted.length-1-i})">&#x2715;</button>`;
+    hl.appendChild(r);
+  });
+}
+
+async function addPeriod(){
+  const s=document.getElementById('inp-date').value;
+  if(!s){toast('Date ထည့်ပါ');return}
+  const start=parseDate(s);
+  const dur=Math.max(1,Math.min(10,parseInt(document.getElementById('inp-dur').value)||5));
+  const cycle=Math.max(21,Math.min(40,parseInt(document.getElementById('inp-cycle').value)||28));
+  if(cycles.find(c=>ds(c.start)===ds(start))){toast('ရှိပြီးသားဖြစ်သည်');return}
+  cycles.push({start,dur,cycle});
+  vy=start.getFullYear();vm=start.getMonth();
+  renderCal();updateStats();renderInsights();
+  await saveCycles();
+  toast('ထည့်ပြီးပါပြီ ✓');
+}
+
+async function del(idx){
+  const sorted=[...cycles].sort((a,b)=>a.start-b.start);
+  cycles=cycles.filter(c=>ds(c.start)!==ds(sorted[idx].start));
+  renderCal();updateStats();renderInsights();
+  await saveCycles();
+  toast('ဖျက်ပြီးပါပြီ');
+}
+
+function mv(d){vm+=d;if(vm>11){vm=0;vy++}if(vm<0){vm=11;vy--}renderCal()}
+
+function go(name,btn){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  document.querySelectorAll('.bnav').forEach(b=>b.classList.remove('active'));
+  document.getElementById('p-'+name).classList.add('active');
+  btn.classList.add('active');
+}
+
+function solo(btn){btn.closest('.flow-row').querySelectorAll('.flow-btn').forEach(b=>b.classList.remove('on'));btn.classList.add('on')}
+function saveLog(){const b=document.querySelector('.save-btn');b.textContent='Saved! ✓';setTimeout(()=>b.textContent='Save log',2000)}
+function toast(msg){const t=document.getElementById('toast');t.textContent=msg;t.classList.add('show');setTimeout(()=>t.classList.remove('show'),2200)}
+
+async function init(){
+  await loadCycles();
+  renderCal();updateStats();renderInsights();
+  document.getElementById('loading').style.display='none';
+}
+init();
+</script>
+</body>
+</html>
